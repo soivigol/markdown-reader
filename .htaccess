@@ -1,0 +1,25 @@
+# Apache URL Rewriting for Markdown Reader
+# This file enables clean URLs without .md extension
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Don't rewrite if it's an actual file (like images, CSS, JS, etc.)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    
+    # Don't rewrite if it's index.php itself
+    RewriteCond %{REQUEST_URI} !^/index\.php$
+    
+    # Don't rewrite if it's Parsedown.php (library file)
+    RewriteCond %{REQUEST_URI} !^/Parsedown\.php$
+    
+    # Rewrite all other requests (including directories) to index.php
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Security: Prevent direct access to sensitive files
+<FilesMatch "^(composer\.(json|lock)|\.htaccess)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

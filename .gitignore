@@ -1,0 +1,6 @@
+/vendor/
+composer.lock
+.DS_Store
+*.log
+# Keep Parsedown.php - it's needed for shared hosting deployment
+!Parsedown.php
