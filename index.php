@@ -438,10 +438,50 @@ if ($realPath === false || strpos($realPath, $documentRoot) !== 0 || !file_exist
 // Load Parsedown library (single file, no Composer needed)
 require_once __DIR__ . '/Parsedown.php';
 
+// Function to create URL-friendly slug from text
+function createHeadingId($text) {
+    // Remove HTML tags
+    $text = strip_tags($text);
+    // Convert to lowercase
+    $text = strtolower($text);
+    // Replace spaces and underscores with hyphens
+    $text = preg_replace('/[\s_]+/', '-', $text);
+    // Remove special characters, keep only alphanumeric and hyphens
+    $text = preg_replace('/[^a-z0-9\-]/', '', $text);
+    // Remove multiple consecutive hyphens
+    $text = preg_replace('/-+/', '-', $text);
+    // Remove leading/trailing hyphens
+    $text = trim($text, '-');
+    return $text;
+}
+
 // Parse markdown
 $parsedown = new Parsedown();
 $markdownContent = file_get_contents($markdownFile);
 $htmlContent = $parsedown->text($markdownContent);
+
+// Add IDs to all headings (h1-h6) and handle duplicates
+$usedIds = [];
+$htmlContent = preg_replace_callback(
+    '/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/i',
+    function($matches) use (&$usedIds) {
+        $level = $matches[1];
+        $content = $matches[2];
+        $baseId = createHeadingId($content);
+        
+        // Handle duplicate IDs
+        $id = $baseId;
+        $counter = 1;
+        while (isset($usedIds[$id])) {
+            $id = $baseId . '-' . $counter;
+            $counter++;
+        }
+        $usedIds[$id] = true;
+        
+        return '<h' . $level . ' id="' . htmlspecialchars($id) . '">' . $content . '</h' . $level . '>';
+    },
+    $htmlContent
+);
 
 // Wrap tables in a scrollable container
 $htmlContent = preg_replace(
@@ -495,6 +535,14 @@ if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $htmlContent, $matches)) {
             background: white;
             border-radius: 10px;
             padding: 30px;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            scroll-margin-top: 20px;
         }
         
         h1 {
